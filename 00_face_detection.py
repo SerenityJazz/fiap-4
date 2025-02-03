@@ -11,11 +11,9 @@ import os
 
 
 MAX_COUNT = 3326
-# FRAME_RESIZE_FACTOR = 0.9
 FRAME_RESIZE_FACTOR = 1
 MAX_WORKERS = multiprocessing.cpu_count()
 INPUT_FILE = "./input.mp4"
-# INPUT_FILE = "./input.1.mp4"
 BASE_DIR = "hog"
 OUTPUT_DIR = "detected_faces"
 OUTPUT_FILE = "tracked_faces.json"

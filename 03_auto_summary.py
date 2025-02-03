@@ -48,26 +48,18 @@ def remove_anomalies(
         #   Não detectar emoção
         #   Não detectar partes do rosto (olhos, nariz, boca)
 
-        # is_ok = True
-
         if not has_face(frame_movements):
             print(f"[{frame}] Anomaly - no face detected within body parts, skipping")
             movement_anomalies += 1
-            # is_ok = False
             continue
         if not frame_emotions:
             print(f"[{frame}] Anomaly - no emotions, skipping")
             emotion_anomalies += 1
-            # is_ok = False
             continue
         if not frame_faces:
             print(f"[{frame}] Anomaly - no faces, skipping")
             face_anomalies += 1
-            # is_ok = False
             continue
-
-        # if not is_ok:
-        #     continue
 
         summary[frame] = {
             "emotions": frame_emotions,
