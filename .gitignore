@@ -1,0 +1,8 @@
+*.mp4
+venv
+.ipynb_checkpoints
+node_modules
+
+emotions/**/*.jpg
+hog/**/*.jpg
+movements/**/*.jpg
