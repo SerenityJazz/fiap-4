@@ -87,6 +87,7 @@ python 01_emotion_detection.py
 
 # Executa a detecção de movimentos corporais e gera a pasta /movements
 python 02_movement_detection.py
+> Levou ~41.261 segundos para executar
 
 # Coleta os arquivos .json gerados nas execuções anteriores e gera um relatório,
 # enquanto imprime no terminal
