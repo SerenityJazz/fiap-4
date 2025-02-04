@@ -83,6 +83,7 @@ python 00_face_detection.py
 
 # Executa a detecção de emoções e gera a pasta /emotions
 python 01_emotion_detection.py
+> Levou ~237.782 segundos para executar
 
 # Executa a detecção de movimentos corporais e gera a pasta /movements
 python 02_movement_detection.py
