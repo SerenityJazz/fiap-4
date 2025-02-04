@@ -79,6 +79,7 @@ Para os resultados das detecções, estas serão salvas na seguinte estrutura:
 ```sh
 # Executa a detecção de rostos e gera a pasta /hog
 python 00_face_detection.py
+> Levou ~136.830 segundos para executar
 
 # Executa a detecção de emoções e gera a pasta /emotions
 python 01_emotion_detection.py
