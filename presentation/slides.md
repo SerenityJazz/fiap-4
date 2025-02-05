@@ -1,9 +1,7 @@
 ---
 theme: neversink
-transition: fade
+transition: slide-left
 color: dark
-addons:
-  - slidev-component-progress
 layout: cover
 ---
 
@@ -18,22 +16,24 @@ layout: section
 # **Problema**
 
 ---
-layout: image-right
+layout: two-cols
 ---
+
+:: left ::
 
 # Problema
 
-É esperado que sejam realizados os seguintes processos, usando o vídeo como base:
+Usando o vídeo fornecido como base, é esperado que sejam realizados os seguintes processos:
 - Reconhecimento facial: Identifique e marque os rostos presentes no vídeo.
 - Análise de expressões emocionais: Analise as expressões emocionais dos rostos identificados.
 - Detecção de atividades: Detecte e categorize as atividades sendo realizadas no vídeo.
 - Geração de resumo: Crie um resumo automático das principais atividades e emoções detectadas no vídeo.
 
-<template v-slot:right>
-<video>
-<source src="../input.mp4"/>
-</video>
-</template>
+:: right ::
+
+<SlidevVideo autoplay muted timestamp=0>
+   <source src="./input.mp4" type="video/mp4" />
+</SlidevVideo>
 
 ---
 layout: section
@@ -48,6 +48,24 @@ color: dark
 
 - É configurado um ambiente virtual, depois são instaladas as dependências do projeto.
 
+````md magic-move
+```sh
+python -m venv venv   # Caso queira instalar em um ambiente virtual
+./venv/bin/activate   # Caso usar Windows, usar .\venv\Scripts\activate
+```
+```sh
+pip install deepface mediapipe face-recognition
+
+# Tive problemas com a biblioteca 'dlib', então tive que baixar binário por fora
+# Usei executável para Python 3.10 desse repositório
+# https://github.com/z-mahmud22/Dlib_Windows_Python3.x
+
+# Depois de baixado, instalei apontando para o arquivo baixado localmente
+# pip install ./<nome do arquivo dlib-versao.whl>
+# pip install tf-keras
+```
+````
+
 ---
 layout: section
 color: dark
@@ -60,6 +78,24 @@ color: dark
 # **Definições Iniciais**
 
 - Para os resultados das detecções, estas serão salvas na seguinte estrutura:
+
+```mermaid
+graph TD
+  A["/"] --> B["/emotions"]
+  B --> C["/detected_emotions"]
+  C --> D[*.jpg]
+  B --> E[tracked_emotions.json]
+  
+  A --> F["/hog"]
+  F --> G["/detected_faces"]
+  G --> H[*.jpg]
+  F --> I[tracked_faces.json]
+
+  A --> J["/movements"]
+  J --> K["/detected_movements"]
+  K --> L[*.jpg]
+  J --> M[tracked_movements.json]
+```
 
 ---
 layout: section
@@ -138,5 +174,76 @@ color: dark
 
 # **Relatório**
 
+- Para que não fosse considerado uma anomalia, cada frame foi verificado se possuía a localização da face, uma emoção predominante, e se possuia os landmarks do rosto*
+
+> *Landmarks do rosto foram definidos como contendo todos os seguintes pontos:
+> - olho esquerdo
+> - olho direito
+> - nariz
+> - lábio esquerdo
+> - lábio direito
+
+---
+
+# **Relatório**
+
 - O ideal é que seja executado para comprovar que o relatório foi, de fato, gerado conforme o vídeo fornecido, mas estes foram os valores obtidos:
-- Para que não fosse considerado uma anomalia, cada frame foi verificado se possuía a localização da face, uma emoção predominante, e se possuia os landmarks do rosto (olho esquerdo, olho direito, nariz, lábio esquerdo, lábio direito).
+
+---
+
+| **GENERAL** |
+| - |
+| 607 frames |
+| 713 face anomalies |
+| 0 emotion anomalies |
+| 2006 movement anomalies |
+
+> Foi verificado se haviam os *landmarks* do rosto, emoções, e rosto.
+
+<br/>
+
+> Cada frame é considerado com limite de 1 anomalia, então mesmo que tenha todos esses pontos faltando, vai representar apenas 1 neste indicador
+
+---
+
+| **FACES** |
+| - |
+| Total of 610 faces |
+
+---
+
+| **EMOTIONS** |  |
+| - | - |
+| 226 | <mark class="green">happy</mark> |
+| 212 | <mark class="gray">neutral</mark> |
+| 101 | <mark>fear</mark> |
+| 75 | <mark class="blue">sad</mark> |
+| 66 | <mark class="purple">surprise</mark> |
+| 11 | <mark class="red">angry</mark> |
+| Total of 691 emotions |
+
+<style>
+   mark.gray {
+      --uno: "bg-gray-500 text-white";
+   }
+   mark.purple {
+      --uno: "bg-purple-500 text-white";
+   }
+   mark.green {
+      --uno: "bg-green-500 text-white";
+   }
+   mark.red {
+      --uno: "bg-red-500 text-white";
+   }
+   mark.blue {
+      --uno: "bg-blue-800 text-white";
+   }
+</style>
+
+---
+
+| **MOVEMENTS** |
+| - |
+| 29 <mark>arms_up</mark> movements |
+| 301 <mark>sideways</mark> movements |
+| Total of 9829 landmarks detected |
