@@ -46,13 +46,16 @@ color: dark
 
 # **Instalação de Pacotes**
 
-- É configurado um ambiente virtual, depois são instaladas as dependências do projeto.
+- É configurado um ambiente virtual
 
-````md magic-move
 ```sh
 python -m venv venv   # Caso queira instalar em um ambiente virtual
 ./venv/bin/activate   # Caso usar Windows, usar .\venv\Scripts\activate
 ```
+<v-click>
+
+- Depois são instaladas as dependências do projeto.
+
 ```sh
 pip install deepface mediapipe face-recognition
 
@@ -64,7 +67,7 @@ pip install deepface mediapipe face-recognition
 # pip install ./<nome do arquivo dlib-versao.whl>
 # pip install tf-keras
 ```
-````
+</v-click>
 
 ---
 layout: section
@@ -81,18 +84,18 @@ color: dark
 
 ```mermaid
 graph TD
-  A["/"] --> B["/emotions"]
-  B --> C["/detected_emotions"]
+  A["Pasta raiz do projeto"] --> B["emotions"]
+  B --> C["detected_emotions"]
   C --> D[*.jpg]
   B --> E[tracked_emotions.json]
   
-  A --> F["/hog"]
-  F --> G["/detected_faces"]
+  A --> F["hog"]
+  F --> G["detected_faces"]
   G --> H[*.jpg]
   F --> I[tracked_faces.json]
 
-  A --> J["/movements"]
-  J --> K["/detected_movements"]
+  A --> J["movements"]
+  J --> K["detected_movements"]
   K --> L[*.jpg]
   J --> M[tracked_movements.json]
 ```
@@ -108,19 +111,39 @@ color: dark
 
 # **Solução**
 
-1. Executa a detecção de rostos e gera a pasta `/hog`.
+1. `00_face_detection.py`
+
+   Executa a detecção de rostos e gera a pasta `/hog`.
 
    Levou ~136.830 segundos para executar.
 
-2. Executa a detecção de emoções e gera a pasta `/emotions`.
+<v-click>
+
+2. `01_emotion_detection.py`
+
+   Executa a detecção de emoções e gera a pasta `/emotions`.
 
    Levou ~237.782 segundos para executar.
 
-3. Executa a detecção de movimentos corporais e gera a pasta `/movements`.
+</v-click>
+
+<v-click>
+
+3. `02_movement_detection.py`
+
+   Executa a detecção de movimentos corporais e gera a pasta `/movements`.
 
    Levou ~41.261 segundos para executar.
 
-4. Coleta os arquivos `.json` gerados nas execuções anteriores e gera um relatório, enquanto imprime no terminal.
+</v-click>
+
+<v-click>
+
+4. `03_auto_summary.py`
+
+   Coleta os arquivos `.json` gerados nas execuções anteriores e gera um relatório, enquanto imprime no terminal.
+
+</v-click>
 
 ---
 layout: section
@@ -136,11 +159,88 @@ color: dark
 - Para os arquivos `00_face_detection.py`, `01_emotion_detection.py`, e `02_movement_detection.py`, estes possuem código semelhante. O que os diferencia são os nomes dos arquivos e pastas geradas e as funções de detecção.
 - Com isso, o fluxo de cada arquivo pode ser resumido nos seguintes passos:
 
+```mermaid
+graph LR
+    A[Inicio] --> B["Função Principal (1/4)"]
+    B --> C["Leitor de Stream (2/4)"]
+    C --> D["Função de detecção Processo 1 (3/4)"]
+    C --> E["Função de detecção Processo 2 (3/4)"]
+    C --> F["Função de detecção Processo 3 (3/4)"]
+    C --> G["Função de detecção Processo N... (3/4)"]
+    D --> H["Salvar imagem em pasta"]
+    E --> I["Salvar imagem em pasta"]
+    F --> J["Salvar imagem em pasta"]
+    G --> K["Salvar imagem em pasta"]
+    H --> L["Salvar em .json"]
+    I --> L["Salvar resultados em .json"]
+    J --> L["Salvar resultados em .json"]
+    K --> L["Salvar resultados em .json"]
+```
+
 ---
 
 # **Função Principal (1/4)**
 
 - Esta função é a que chama o arquivo de vídeo, executa através de uma função que permite disponibilizar o vídeo como stream, que então processa cada frame do vídeo e depois salva os resultados coletados em um `.json`.
+
+````md magic-move
+```py {1-6}
+def track_func(video_source: str) -> Dict[int, List[str]]:
+    data = {}
+    # Abre o video com o leitor de stream, que inicia vários processos
+    for i, detected_content in enumerate(
+        stream_reader(video_source=video_source),
+    ):
+        if not detected_content:
+            continue
+        data[i] = detected_content
+
+    save_to_json(
+        data=data,
+        filename=os.path.join(BASE_DIR, OUTPUT_FILE),
+    )
+    return data
+```
+
+```py {1-2,7-10}
+def track_func(video_source: str) -> Dict[int, List[str]]:
+    data = {}
+    # Abre o video com o leitor de stream, que inicia vários processos
+    for i, detected_content in enumerate(
+        stream_reader(video_source=video_source),
+    ):
+        # Depois de obter o resultado, salva o frame e o que foi detectado
+        if not detected_content:
+            continue
+        data[i] = detected_content
+
+    save_to_json(
+        data=data,
+        filename=os.path.join(BASE_DIR, OUTPUT_FILE),
+    )
+    return data
+```
+
+```py {12-17}
+def track_func(video_source: str) -> Dict[int, List[str]]:
+    data = {}
+    # Abre o video com o leitor de stream, que inicia vários processos
+    for i, detected_content in enumerate(
+        stream_reader(video_source=video_source),
+    ):
+        # Depois de obter o resultado, salva o frame e o que foi detectado
+        if not detected_content:
+            continue
+        data[i] = detected_content
+
+    # Após terminar o loop, salva os resultados com os frames em um .json
+    save_to_json(
+        data=data,
+        filename=os.path.join(BASE_DIR, OUTPUT_FILE),
+    )
+    return data
+```
+````
 
 ---
 
@@ -148,20 +248,216 @@ color: dark
 
 - Além de ser uma função que disponibiliza os frames do vídeo passado como um gerador, ele também repassa as tarefas para múltiplos processos executarem em paralelo.
 
+````md magic-move
+```py {1-8,18}
+def stream_reader(video_source: str) -> Iterable[List[str]]:
+   # Ler o vídeo
+   cap = cv2.VideoCapture(video_source)
+   if not cap.isOpened():
+      return
+
+   total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+   frame_iterator = tqdm(range(min(total_frames, MAX_COUNT)), desc="Detecting faces")
+
+   with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
+      futures = [
+         executor.submit(process_frame, cap.read()[1], i)
+         for i in frame_iterator
+         if cap.read()[0]
+      ]
+      for future in tqdm(futures, desc="Processing frames"):
+         yield future.result()
+   cap.release()
+```
+```py {10-16}
+def stream_reader(video_source: str) -> Iterable[List[str]]:
+   # Ler o vídeo
+   cap = cv2.VideoCapture(video_source)
+   if not cap.isOpened():
+      return
+
+   total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+   frame_iterator = tqdm(range(min(total_frames, MAX_COUNT)), desc="Detecting faces")
+
+   # Inicia vários processos, para executar a função de detecção em paralelo
+   with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
+      futures = [
+         executor.submit(process_frame, cap.read()[1], i)
+         for i in frame_iterator
+         if cap.read()[0]
+      ]
+      for future in tqdm(futures, desc="Processing frames"):
+         yield future.result()
+   cap.release()
+```
+```py {17-19}
+def stream_reader(video_source: str) -> Iterable[List[str]]:
+   # Ler o vídeo
+   cap = cv2.VideoCapture(video_source)
+   if not cap.isOpened():
+      return
+
+   total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+   frame_iterator = tqdm(range(min(total_frames, MAX_COUNT)), desc="Detecting faces")
+
+   # Inicia vários processos, para executar a função de detecção em paralelo
+   with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
+      futures = [
+         executor.submit(process_frame, cap.read()[1], i)
+         for i in frame_iterator
+         if cap.read()[0]
+      ]
+      # Retorna resultados por chamada do gerador
+      for future in tqdm(futures, desc="Processing frames"):
+         yield future.result()
+   cap.release()
+```
+````
+
 ---
 
 # **Função de Detecção (3/4)**
 
-- Esta função varia ao longo dos arquivos mencionados anteriormente, mas consiste em obter o frame do vídeo, converter a cor do formato que o OpenCV2 usa (BGR) para (RGB).
-- Então é passado para a biblioteca de detecção, que retorna algumas informações e as coordenadas da detecção caso esta tenha sido sucedida.
-- Após tal passo, é salvo a imagem detectada na respectiva pasta definida em cada arquivo.
-- Depois disso, retorna estes valores.
+- Usa o frame, converte de BGR para RGB, passa para a biblioteca de detecção, obtém as coordenadas e informações necessárias, salva a imagem detectada, e retorna
+
+````md magic-move
+```py {1-11}
+def process_frame(
+   frame: np.ndarray,
+   frame_index: int,
+) -> List[dict[str, float]]:
+   # Usuário pode redimensionar o frame caso queira experimentar por questões de performance
+   small_frame = cv2.resize(
+      frame,
+      (0, 0),
+      fx=FRAME_RESIZE_FACTOR,
+      fy=FRAME_RESIZE_FACTOR,
+   )
+   rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+   face_locations = face_recognition.face_locations(rgb_frame, model="hog")
+
+   detected_faces = []
+   for loc in face_locations:
+      top, right, bottom, left = loc
+      face_str = f"frame{frame_index:04d}_top{top:.3f}_right{right:.3f}_bottom{bottom:.3f}_left{left:.3f}"
+      detected_faces.append(
+         {
+            "TOP": top,
+            "RIGHT": right,
+            "BOTTOM": bottom,
+            "LEFT": left,
+         }
+      )
+      face_img = rgb_frame[top:bottom, left:right]
+
+      face_filename = os.path.join(BASE_DIR, OUTPUT_DIR, f"{face_str}.jpg")
+      cv2.imwrite(face_filename, cv2.cvtColor(face_img, cv2.COLOR_RGB2BGR))
+
+   return detected_faces
+```
+```py {8-10}
+def process_frame(
+   frame: np.ndarray,
+   frame_index: int,
+) -> List[dict[str, float]]:
+   # Usuário pode redimensionar o frame caso queira experimentar por questões de performance
+   small_frame = cv2.resize(frame, (0, 0), fx=FRAME_RESIZE_FACTOR, fy=FRAME_RESIZE_FACTOR)
+
+   # Converte de BGR para RGB
+   rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+   face_locations = face_recognition.face_locations(rgb_frame, model="hog")
+
+   detected_faces = []
+   for loc in face_locations:
+      top, right, bottom, left = loc
+      face_str = f"frame{frame_index:04d}_top{top:.3f}_right{right:.3f}_bottom{bottom:.3f}_left{left:.3f}"
+      detected_faces.append(
+         {
+            "TOP": top,
+            "RIGHT": right,
+            "BOTTOM": bottom,
+            "LEFT": left,
+         }
+      )
+      face_img = rgb_frame[top:bottom, left:right]
+
+      face_filename = os.path.join(BASE_DIR, OUTPUT_DIR, f"{face_str}.jpg")
+      cv2.imwrite(face_filename, cv2.cvtColor(face_img, cv2.COLOR_RGB2BGR))
+
+   return detected_faces
+```
+```py {10-12}
+def process_frame(
+   frame: np.ndarray,
+   frame_index: int,
+) -> List[dict[str, float]]:
+   # Usuário pode redimensionar o frame caso queira experimentar por questões de performance
+   small_frame = cv2.resize(frame, (0, 0), fx=FRAME_RESIZE_FACTOR, fy=FRAME_RESIZE_FACTOR)
+
+   # Converte de BGR para RGB
+   rgb_frame = cv2.cvtColor(small_frame, cv2.COLOR_BGR2RGB)
+
+   # Executa a função de detecção (nesse caso, é a de localizar rostos com a biblioteca 'face-recognition')
+   face_locations = face_recognition.face_locations(rgb_frame, model="hog")
+
+   detected_faces = []
+   for loc in face_locations:
+      top, right, bottom, left = loc
+      face_str = f"frame{frame_index:04d}_top{top:.3f}_right{right:.3f}_bottom{bottom:.3f}_left{left:.3f}"
+      detected_faces.append(
+         {
+            "TOP": top,
+            "RIGHT": right,
+            "BOTTOM": bottom,
+            "LEFT": left,
+         }
+      )
+      face_img = rgb_frame[top:bottom, left:right]
+
+      face_filename = os.path.join(BASE_DIR, OUTPUT_DIR, f"{face_str}.jpg")
+      cv2.imwrite(face_filename, cv2.cvtColor(face_img, cv2.COLOR_RGB2BGR))
+
+   return detected_faces
+```
+
+```py {6-}
+def process_frame(
+   frame: np.ndarray,
+   frame_index: int,
+) -> List[dict[str, float]]:
+   # Executa a função de detecção (nesse caso, é a de localizar rostos com a biblioteca 'face-recognition')
+   face_locations = face_recognition.face_locations(rgb_frame, model="hog")
+   # Para cada resultado, salva as informações e a imagem em sua respectiva pasta (nesse caso, a pasta 'hog/detected_faces')
+   detected_faces = []
+   for loc in face_locations:
+      top, right, bottom, left = loc
+      face_str = f"frame{frame_index:04d}_top{top:.3f}_right{right:.3f}_bottom{bottom:.3f}_left{left:.3f}"
+      detected_faces.append({
+         "TOP": top, "RIGHT": right, "BOTTOM": bottom, "LEFT": left,
+      })
+      face_img = rgb_frame[top:bottom, left:right]
+
+      face_filename = os.path.join(BASE_DIR, OUTPUT_DIR, f"{face_str}.jpg")
+      cv2.imwrite(face_filename, cv2.cvtColor(face_img, cv2.COLOR_RGB2BGR))
+
+   return detected_faces
+```
+````
 
 ---
 
 # **Salvar em .json (4/4)**
 
 - Uma simples função utilitária para salvar o dicionário do Python em um arquivo `.json`.
+
+```py
+def save_to_json(data: Dict[int, List[str]], filename: str) -> None:
+   # Função para salvar os dados em JSON
+   with tqdm(total=1, desc="Saving JSON") as pbar:
+      with open(filename, "w") as f:
+         json.dump(data, f)
+      pbar.update(1)
+```
 
 ---
 layout: section
@@ -189,8 +485,6 @@ color: dark
 
 - O ideal é que seja executado para comprovar que o relatório foi, de fato, gerado conforme o vídeo fornecido, mas estes foram os valores obtidos:
 
----
-
 | **GENERAL** |
 | - |
 | 607 frames |
@@ -206,11 +500,15 @@ color: dark
 
 ---
 
+# **Relatório**
+
 | **FACES** |
 | - |
 | Total of 610 faces |
 
 ---
+
+# **Relatório**
 
 | **EMOTIONS** |  |
 | - | - |
@@ -241,6 +539,8 @@ color: dark
 </style>
 
 ---
+
+# **Relatório**
 
 | **MOVEMENTS** |
 | - |
