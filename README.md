@@ -1,5 +1,10 @@
 # Entregável 4 - Detecção de rosto, expressões faciais e movimentos corporais
 
+| Vídeo da explicação |
+| -- |
+| [![vlcsnap-2025-02-09-23h32m29s990](https://github.com/user-attachments/assets/257c5ab1-ec0e-4ada-a6b9-b930661f4ae9)](https://www.youtube.com/watch?v=Qlh0Mh103OE) |
+
+
 # 1. Problema
 
 Link do vídeo: https://drive.usercontent.google.com/download?id=1B5PbZdUDi-r7Ac7BK3a3WdNppfQqM_Ne&export=download
